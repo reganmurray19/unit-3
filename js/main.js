@@ -1,180 +1,70 @@
-//Execute script when window is loaded
-window.onload = function(){
-  var w = 900, h = 500;
+window.onload = setMap();
 
-  //create body container
-  var container = d3.select("body")
-    .append("svg")
-    .attr("width", w)
-    .attr("height", h)
-    .attr("class", "container")
-    .style("background-color", "rgba(0,0,0,0.2)")
 
-  //construct inner rectangle
-  var innerRect = container.append("rect")
-    .datum(400)
-    .attr("width", function(d) {
-      return d*2;
-    })
-    .attr("height", function(d) {
-      return d;
-    })
-    .attr("class", "innerRect")
-    .attr("x", 50)
-    .attr("y", 50)
-    .style("fill", "#FFFFFF");
+//Create the choropleth map
+function setMap() {
 
-    //initialize data for bubble chart
-    var cityPop = [
-      {
-          city: 'Tokyo',
-          population: 30.3
-      },
-      {
-          city: 'Delhi',
-          population: 7.33
-      },
-      {
-          city: 'Shanghai',
-          population: 6.85
-      },
-      {
-        city: 'Mumbai',
-        population: 10.39
-      },
-      {
-          city: 'Ciudad de Mexico',
-          population: 14.28
-      },
-      {
-          city: 'Bejing',
-          population: 6.02
-      },
-      {
-          city: 'Osaka',
-          population: 17.58
-      },
-      {
-          city: 'Al-Qahirah',
-          population: 8.33
-      },
-      {
-          city: 'New York-Newark',
-          population: 15.83
-      },
-      {
-          city: 'Dhaka',
-          population: 4.66
-      },
-      {
-          city: 'Karachi',
-          population: 6.03
-      },
-      {
-          city: 'Kolkata',
-          population: 9.95
-      },
-      {
-          city: 'Istanbul',
-          population: 5.41
-      },
-  ];
+  //map frame dimensions
+  var width = 960,
+      height = 460;
 
-  //calculate population data min
-  var min = d3.min(cityPop, function(d){
-      return d.population;
-  });
+  //svg container for the map
+  var map = d3.select("body")
+        .append("svg")
+        .attr("class", "map")
+        .attr("width", width)
+        .attr("height", height)
 
-  //calculate population data max
-  var max = d3.max(cityPop, function(d){
-      return d.population;
-  });
+  //Define a projection
+  var proj = d3.geoConicEqualArea()
+        .center([15.6,33.75])
+        .parallels([0, 63.5])
+        .rotate([100, 0])
+        .scale(75000)
+        .translate([width / 2, height / 2]);
 
-  //create x scale for circles
-  var scale = d3.scaleLinear()
-    .range([90, 810])
-    .domain([0, 14]);
+  //Create path for drawing map
+  var path = d3.geoPath()
+        .projection(proj);
 
-  //create y scale for circles
-  var yScale = d3.scaleLinear()
-    .range([450, 50])
-    .domain([0, 50]);
+  var promises = [d3.csv("data/atl_vote_data.csv"),
+                  d3.json("data/atlanta_precints.json"),
+                  d3.json("data/GA_precincts16.json")];
 
-  //set color scale
-  var color = d3.scaleLinear()
-    .range([
-      "#FDBE85",
-      "#D94701"
-    ])
-    .domain([min, max]);
+  Promise.all(promises).then(callback);
 
-  //create a y axis for chart
-  var yAxis = d3.axisLeft(yScale);
-  var axis = container.append("g")
-    .attr("class", "axis")
-    .attr("transform", "translate(50, 0)")
-    .call(yAxis);
+  //Callback function
+  function callback(data) {
 
-  //create a title for chart
-  var title = container.append("text")
-    .attr("class", "title")
-    .attr("text-anchor", "middle")
-    .attr("x", 450)
-    .attr("y", 30)
-    .text("1985 City Populations (Millions)");
+    //Add data to DOM
+    csvData = data[0];
+    atlPrecints = data[1];
+    states = data[2];
 
-  //label bubbles on chart
-  var labels = container.selectAll(".labels")
-    .data(cityPop)
-    .enter()
-    .append("text")
-    .attr("class", "labels")
-    .attr("text-anchor", "left")
-    .attr("y", function(d){
-      return yScale(d.population) + 25;
-    });
+    //Convert to topoJSON
+    var statesTopo = topojson.feature(states, states.objects.GA_precincts16),
+        atlPrecintTopo = topojson.feature(atlPrecints, atlPrecints.objects.atlanta_precints).features;
 
-    //create line for city names
-    var nameLine = labels.append("tspan")
-    .attr("class", "nameLine")
-    .attr("x", function(d,i){
-        return scale(i) + Math.sqrt(d.population * 0.01 / Math.PI) + 20;
-    })
-    .text(function(d){
-        return d.city;
-    });
+    //Use path object to draw geometry
+    var statesMap = map.append("path")
+            .datum(statesTopo)
+            .attr("class", "states")
+            .attr("d", path);
 
-  //create circles proportional to city population
-  var circles = container.selectAll("circles")
-    .data(cityPop)
-    .enter()
-    .append("circle")
-    .attr("class", "circles")
-    .attr("id", function(d) {
-      return d.city;
-    })
-    .attr("r", function(d, i){ //circle radius
-      var area = d.population * 100;
-      return Math.sqrt(area/Math.PI);
-    })
-    .attr("cx", function(d, i){
-      return scale(i);
-    })
-    .attr("cy", function(d,i){
-      return yScale(d.population);
-    })
-    .style("fill", function(d,i) {
-      return color(d.population);
-    });
+  //load the ATL precincts
+    var precintsMap = map.selectAll(".atlanta_precints")
+            .data(atlPrecintTopo)
+            .enter()
+            .append("path")
+            .attr("class", function(d) {
+              return "precincts " + d.properties.VoterDist;
+            })
+            .attr("d", path);
 
-    //label bubbles on chart
-    var labels = container.selectAll(".labels")
-      .data(cityPop)
-      .enter()
-      .append("text")
-      .attr("class", "labels")
-      .attr("text-anchor", "left")
-      .attr("y", function(d){
-        return yScale(d.population) - 30;
-      });
+
+    //console.log(precintsMap);
+    // console.log(csvData);
+    //console.log(atlPrecints);
+    // console.log(states);
+  }
 }
