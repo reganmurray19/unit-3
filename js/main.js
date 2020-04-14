@@ -23,20 +23,21 @@ function main() {
     var domainArray = [];
     for(var i = 0; i < data.length; i++) {
       var val = parseFloat(data[i].properties[expressed]);
-      domainArray.push(val);
+      if(!isNaN(val)){
+        domainArray.push(val);
+      }
     }
 
     //Create clusters using the ckmeans algorithm
-    var clusters = ckmeans(domainArray, 5);
+    var clusters = ss.ckmeans(domainArray, 5);
     //Reset domain array to cluster minimums
     domainArray = clusters.map(function(d){
       return d3.min(d);
     });
 
     //Remove first value from domain array to create class breakpts
-    domainArray.shift();
-    console.log(domainArray);
     console.log(clusters);
+    domainArray.shift();
 
     //Assign array of last 4 cluster minimums as domainArray
     colorScale.domain(domainArray);
@@ -75,17 +76,20 @@ function main() {
   function setMap() {
 
     //Basic style elements for svg container
-    var width = window.innerWidth * 0.35,
+    var width = 550,
         height = 700;
     //Append the html body with an svg container to hold the map
     d3.select("#mapp")
-      .style("float", "left");
+      .style("top", "0")
+      .style("z-index", "10")
+      .style("position","absolute");
 
     var map = d3.select("#mapp")
           .append("svg")
           .attr("class", "map")
           .attr("width", width)
-          .attr("height", height);
+          .attr("height", height)
+          .attr("position", "absolute");
 
     //Define a projection
     var proj = d3.geoConicEqualArea()
@@ -102,8 +106,7 @@ function main() {
 
     //Assign data to variables then promise
     var promises = [d3.csv("data/atl_vote_data.csv"),
-                    d3.json("data/atlanta_precints.json"),
-                    d3.json("data/GA_precincts16.json")];
+                    d3.json("data/atlanta_precints.json")];
 
     Promise.all(promises).then(callback);
 
@@ -112,12 +115,10 @@ function main() {
       //Add data to DOM
       csvData = data[0];
       atlPrecints = data[1];
-      gaPrecincts = data[2];
 
 
       //Convert to topoJSON
-      var gaPrecinctTopo = topojson.feature(gaPrecincts, gaPrecincts.objects.GA_precincts16),
-          atlPrecinctTopo = topojson.feature(atlPrecints, atlPrecints.objects.atlanta_precints).features;
+      var atlPrecinctTopo = topojson.feature(atlPrecints, atlPrecints.objects.atlanta_precints).features;
 
       //Call the joinData functino to unite csv and json data
       atlPrecinctTopo = joinData(atlPrecinctTopo, csvData);
@@ -126,7 +127,7 @@ function main() {
       //Instantiate colorScale
       colorScale = setColors(atlPrecinctTopo, "2008 - Presidential");
 
-      enumerationUnits(atlPrecinctTopo, gaPrecinctTopo, map, path, colorScale);
+      enumerationUnits(atlPrecinctTopo, map, path, colorScale);
       var tempBool = false;
       setGraph(null, tempBool, atlPrecinctTopo);
 
@@ -134,8 +135,8 @@ function main() {
   };
 
   //This function appends maps to the svg element with scaled coloring
-  function enumerationUnits(atlPrecintTopo, gaPrecinctTopo, map, path, colorScale) {
-
+  function enumerationUnits(atlPrecintTopo, map, path, colorScale) {
+    styleText();
     //Function for when mouse is over a precinct
     var mouseOver = function(d) {
       var tempBool = true;
@@ -158,15 +159,6 @@ function main() {
         .duration(200)
         .style("opacity", 1);
     };
-    //Use path object to draw all state precincts as background
-    var gaPrecinctMap = map.append("path")
-            .datum(gaPrecinctTopo)
-            .attr("class", "statePrecincts")
-            .attr("d", path)
-            .style("fill", "#ffffff")
-            .style("stroke", "#000000")
-            .style("stroke-opacity", 0.3)
-            .style("stroke-width", "0.075px");
 
     //Append Atlanta precincts to map
     var precintsMap = map.selectAll(".atlanta_precints")
@@ -178,7 +170,9 @@ function main() {
             .on("mouseover", mouseOver)
             .on("mouseleave", mouseLeave)
             .style("stroke-opacity", 1)
-            .style("stroke", "white");
+            .style("stroke", "white")
+            .style("z-index", "10")
+            .style("position", "relative");
 
     //Call the update functiont to set the inital status of map
     update(d3.select("#timeslide").attr("min"));
@@ -196,9 +190,10 @@ function main() {
     document.getElementById("range").innerHTML=attrArray[value];
 
     d3.select("#sliderContainer")
-      .style("position", "relative")
-      .style("padding-top", "230px")
-      .style("padding-left", "175px");
+      .style("position", "absolute")
+      .style("padding-top", "50px")
+      .style("padding-left", "165px")
+      .style("z-index", "1");
 
     d3.select("#range")
       .style("font-family", 'bureauGrot')
@@ -219,6 +214,31 @@ function main() {
       });
 
 }
+
+  //This function styles text
+  function styleText() {
+    d3.select("#bodyTitle")
+      .style("font-family", "bureauGrot")
+      .style("font-size", "28pt")
+      .style("padding-top", "20px")
+      .style("padding-right", "10px")
+      .style("padding-bottom", "10px")
+      .style("padding-left", "0px");
+
+    d3.select("#desc")
+      .style("font-family", "sans-serif")
+      .style("z-index", "0")
+      .style("top", "20px")
+      .style("left", "500px")
+      .style("padding-right", "30px")
+      .style("position","absolute");
+
+    d3.select("#legend")
+      .style("position", "absolute")
+      .style("z-index", "11")
+      .style("top","0px")
+      .style("left","0px");
+  }
 
   //This function creates the overall bar chart
   function setGraph(d, bool,atlPrecintTopo){
@@ -258,8 +278,9 @@ function main() {
       .attr("width", chartWidth)
       .attr("height", chartHeight)
       .attr("class", "chart")
-      .style("padding-top", "0px")
-      .style("padding-right", "30px");
+      .style("padding-top", "100px")
+      .style("padding-right", "30px")
+      .style("padding-left", "550px");
 
       var bars = chart.selectAll(".bars")
           .data(tempData)
