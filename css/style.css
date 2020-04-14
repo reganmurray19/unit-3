@@ -1,33 +1,46 @@
-.axis path,
-.axis line {
-    fill: none;
-    stroke: black;
-    stroke-width: 1px;
-    shape-rendering: crispEdges;
+@font-face {
+  font-family: "bureauGrot";
+  src: url("/img/bureau_grot.otf")
 }
 
-.axis text {
-    font-family: sans-serif;
-    font-size: 0.9em;
-}
-
-.title {
-    font-family: sans-serif;
-    font-size: 1.5em;
-    font-weight: bold;
-}
-
-.states {
+.gaPrecinctMap {
   fill: white;
   stroke: #949494;
 }
-
-.chartTitle {
-    font-family: sans-serif;
-    font-size: 1.5em;
-    font-weight: bold;
+.map {
+  border-style: solid;
+  border-width: 0.5px;
+  border-color: #d9d9d9;
 }
-
+.sliderContainer{
+  padding-top:1000px;
+  padding-left: 40px;
+}
+.timeslide {
+  padding-left:40px;
+}
 .chart {
-  leftPadding: 20px;
+  font-family: 'bureauGrot', sans-serif;
+}
+.chart-title {
+  font-size: 20pt;
+}
+.chart-year-labels {
+  font-size: 10pt;
+  font-weight: lighter;
+  letter-spacing: 0.5px;
+}
+.chart-labels{
+  font-weight: lighter;
+  font-spacing: 0.65px;
+}
+.range {
+  font-family: 'bureauGrot', sans-serif;
+}
+.map{
+  padding-top: 20px;
+  paddling-left: 20px;
+}
+.desc {
+  float: right;
 }
