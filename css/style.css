@@ -3,6 +3,11 @@
   src: url("/img/bureau_grot.otf")
 }
 
+@font-face {
+  font-family: "myriad";
+  src: url("/img/MYRIADPRO-REGULAR.OTF");
+}
+
 .gaPrecinctMap {
   fill: white;
   stroke: #949494;

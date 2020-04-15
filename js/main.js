@@ -226,11 +226,11 @@ function main() {
       .style("padding-left", "0px");
 
     d3.select("#desc")
-      .style("font-family", "sans-serif")
+      .style("font-family", "myriad")
       .style("z-index", "0")
       .style("top", "20px")
-      .style("left", "500px")
-      .style("padding-right", "30px")
+      .style("left", "550px")
+      .style("padding-right", "50px")
       .style("position","absolute");
 
     d3.select("#legend")
@@ -269,7 +269,7 @@ function main() {
       max = 200000;
     }
     var yScale = d3.scaleLinear()
-      .range([0, chartHeight])
+      .range([0, chartHeight - 35])
       .domain([0, max]);
 
 
@@ -278,7 +278,7 @@ function main() {
       .attr("width", chartWidth)
       .attr("height", chartHeight)
       .attr("class", "chart")
-      .style("padding-top", "100px")
+      .style("padding-top", "120px")
       .style("padding-right", "30px")
       .style("padding-left", "550px");
 
@@ -313,7 +313,7 @@ function main() {
         return i * fraction + (fraction-1)/2;
       })
       .attr("y", function(d) {
-        return chartHeight - yScale(parseFloat(d)) + 45;
+        return chartHeight - yScale(parseFloat(d)) + 25;
       })
       .text(function(d) {
         return d + " votes";
@@ -332,7 +332,7 @@ function main() {
         return i * fraction + (fraction-1)/2;
       })
       .attr("y", function(d) {
-        return chartHeight -10;
+        return chartHeight - 5;
       })
       .text(function(d) {
         if(d==tempData[0]){
